@@ -4,7 +4,7 @@
 		init: function(divShip, divRoad, x, y) {
 			this.ship = divShip;
 			this.road = divRoad;
-			this.x = x;1
+			this.x = x;
 			this.y = y;
 			this.moving = 0;
 			this.state = 1;
@@ -16,6 +16,8 @@
 			this.accelerationY = 0;
 			this.incrAcceleration = 0.2;
 			this.incrAccelerationY = 1;
+			this.shootDelay = 200;
+			this.shooting = 0;
 			this.type = 1;
 			this.keys = [];
 			this.keys[16] = 0,
@@ -44,7 +46,7 @@
 					else if (self.keys[37]) { var x = -1, y = 0; }
 					else if (self.keys[39]) { var x = 1, y = 0; }
 					if (self.keys[16]) { self.flip(self.moving, array); }
-					else if (self.keys[32]) { self.shoot(self.type, array); }
+					else if (self.keys[32] && !self.shooting) { self.shoot(self.type, array); }
 					if (x || y) {
 						/*if (x !== self.keys[1] || y !== self.keys[2]) {
 							console.log(self.keys[0]);
@@ -63,28 +65,28 @@
 				var key = e.keyCode || e.which;
 				switch(key) {
 					case 38:
-						self.decelerate(divShip, 0, 1);
+//						self.decelerate(divShip, 0, 1);
 						self.keys[key] = 0;
 						/*self.keys[1] = 0;
 						self.keys[2] = 0;
 						if (self.keys[0]) { clearInterval(self.keys[0]); self.keys[0] = 0; }*/
 						break;
 					case 40:
-						self.decelerate(divShip, 0, -1);
+//						self.decelerate(divShip, 0, -1);
 						self.keys[key] = 0;
 						/*self.keys[1] = 0;
 						self.keys[2] = 0;
 						if (self.keys[0]) { clearInterval(self.keys[0]); self.keys[0] = 0; }*/
 						break;
 					case 37:
-						self.decelerate(divShip, -1, 0);
+//						self.decelerate(divShip, -1, 0);
 						self.keys[key] = 0;
 						/*self.keys[1] = 0;
 						self.keys[2] = 0;
 						if (self.keys[0]) { clearInterval(self.keys[0]); self.keys[0] = 0; }*/
 						break;
 					case 39:
-						self.decelerate(divShip, 1, 0);
+//						self.decelerate(divShip, 1, 0);
 						self.keys[key] = 0;
 						/*self.keys[1] = 0;
 						self.keys[2] = 0;
@@ -104,8 +106,12 @@
 		move: function (divShip, x, y) {
 			if (this.acceleration == this.incrMove || this.acceleration == this.incrZ) {
 				this.moving = 1;
-				divShip.style.left = parseFloat(divShip.style.left) + (x * this.incrMove) + "%";
-				divShip.style.transform = 'translateZ('+ (parseFloat(divShip.style.transform.split('(')[1]) + (y * this.incrY)) + 'px)';
+				var newX = parseFloat(divShip.style.left) + (x * this.incrMove),
+					newY = (parseFloat(divShip.style.transform.split('(')[1]) + (y * this.incrY));
+				if (newX < 0) newX = 0;
+				else if (newX > 178) newX = 178;
+				divShip.style.left = newX + "%";
+				divShip.style.transform = 'translateZ('+ newY + 'px)' + 'rotateX(-80deg) translateX(-105%)';
 				this.moving = 0;
 			}
 			else this.accelerate(divShip, x, y);
@@ -120,8 +126,12 @@
 				if (this.accelerationY + this.incrAccelerationY < this.incrY) this.accelerationY += this.incrAccelerationY;
 				else this.accelerationY = this.incrY;
 			}
-			divShip.style.left = parseFloat(divShip.style.left) + (x * this.acceleration) + "%";
-			divShip.style.transform = 'translateZ('+ (parseFloat(divShip.style.transform.split('(')[1]) + (y * this.accelerationY)) + 'px)';
+			var newX = parseFloat(divShip.style.left) + (x * this.acceleration),
+				newY = (parseFloat(divShip.style.transform.split('(')[1]) + (y * this.accelerationY));
+			if (newX < 0) newX = 0;
+			else if (newX > 178) newX = 178;
+			divShip.style.left = newX + "%";
+			divShip.style.transform = 'translateZ('+ newY + 'px)' + 'rotateX(-80deg) translateX(-105%)';
 			this.moving = 0;
 		},
 		decelerate: function(divShip, x, y) {
@@ -130,17 +140,41 @@
 			if (this.accelerationY > 0.1) this.accelerationY = this.accelerationY/2;
 			else this.accelerationY = 0;
 			divShip.style.left = parseFloat(divShip.style.left) + (x * this.acceleration) + "%";
-			divShip.style.transform = 'translateZ('+ (parseFloat(divShip.style.transform.split('(')[1]) + (y * this.accelerationY)) + 'px)';
+			divShip.style.transform = 'translateZ('+ (parseFloat(divShip.style.transform.split('(')[1]) + (y * this.accelerationY)) + 'px)' + 'rotateX(-80deg) translateX(-105%)';
 			if (this.acceleration != 0) this.decelerate(divShip, x, y); //mettre un set interval dans le keyup à la place
 		},
 		shoot: function (type, array) {
-			var shotX = parseInt(this.ship.style.left);
-			var shotY = parseFloat(this.ship.style.transform.split('(')[1]);
-			var shotZ = parseInt(this.ship.style.bottom);
-			var shotTest = new Shot();
-			shotTest.init(this.ship, this.road, shotX, shotY, shotZ, this.type, array);
-			shotTest.checkLine(array);
-			shotTest.moveCall(array);
+			var shotsCoord = [],
+				shots = [];
+			shotsCoord[0] = { 
+				shotX: parseInt(this.ship.style.left)/2 -9,
+				shotY: parseFloat(this.ship.style.transform.split('(')[1])/2 +20,
+				shotZ: parseInt(this.ship.style.bottom)+13
+			};
+			shotsCoord[1] = {
+				shotX: parseInt(this.ship.style.left)/2 +10,
+				shotY: parseFloat(this.ship.style.transform.split('(')[1])/2 +20,
+				shotZ: parseInt(this.ship.style.bottom)+13
+			};
+			shotsCoord[2] = {
+				shotX: parseInt(this.ship.style.left)/2 -9,
+				shotY: parseFloat(this.ship.style.transform.split('(')[1])/2 -20,
+				shotZ: parseInt(this.ship.style.bottom)+13
+			};
+			shotsCoord[3] = {
+				shotX: parseInt(this.ship.style.left)/2 +10,
+				shotY: parseFloat(this.ship.style.transform.split('(')[1])/2 -20,
+				shotZ: parseInt(this.ship.style.bottom)+13
+			};
+			for (var i = 0; i < shotsCoord.length; i++) {
+				shots[i] = new Shot ();
+				shots[i].init(this.ship, this.road, shotsCoord[i].shotX, shotsCoord[i].shotY, shotsCoord[i].shotZ, this.type, array);
+				shots[i].checkLine(array);
+				shots[i].moveCall(array);
+			}
+			this.shooting = 1;
+			var self = this;
+			setTimeout(function() { self.shooting = 0; }, self.shootDelay);
 		},
 		flip: function (state, array) {
 			if (state == 1) console.log('flip');

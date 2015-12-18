@@ -8,26 +8,48 @@
 			this.yArray = y;
 			this.x = parseInt((this.xArray*100)/array.length);
 			this.y = parseInt((this.yArray*100)/array.length);
-			this.z = 100;
+			this.z = 500;
 			this.ship = document.createElement('div');
 			this.ship.style.left = this.x + "%";
 			this.ship.style.bottom = this.z + "%";
-			this.ship.style.transform = 'translateZ(' + this.y + 'px)';
+			this.ship.style.transform = 'translateZ(' + this.y + 'px) rotateX(-80deg)';
 			this.ship.className = "enemy-"+(type-1);
 			this.road.appendChild(this.ship);
-			this.health = this.type;
+			this.health = this.type * this.type;
+			this.intervMove = 0;
 		},
-		move: function () {
-			console.log('move');
+		move: function (array, divPlayerShip, playerShip) {
+			var self = this;
+			self.intervMove = setInterval(function () {
+				self.z -= 1;
+				self.ship.style.bottom = self.z + "%";
+				switch(self.z) {
+					case -30:
+						if(array[self.xArray][self.yArray]) {
+							array[self.xArray][self.yArray] = 0;
+							self.delete();
+						}
+						break;
+					/*case 4 {
+						var 
+					}*/
+				}
+			}, 30);
 		},
-		shoot: function () {
-			console.log('move');
+		touched: function (shot, type, array) {
+			this.health -= shot.type*10;
+			if (this.health < 1) this.die(array);
 		},
-		touched: function (shot, type) {
-			shot.delete();
+		explose: function () {
+			console.log('explose');
 		},
-		die: function () {
-			console.log('move');
+		delete: function () {
+			this.road.removeChild(this.ship);
+		},
+		die: function (array) {
+			array[this.xArray][this.yArray] = 0;
+			this.delete();
+			this.explose();
 		}
 	}
 //}) ();
