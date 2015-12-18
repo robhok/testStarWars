@@ -95,10 +95,6 @@ particle.prototype = {
 			globalVar.context.closePath();
 			this.incr++;
 		}
-		else this.end();
-	},
-	end: function() {
-		console.log('end');
 	}
 }
 var particles = [],

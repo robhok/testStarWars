@@ -17,7 +17,7 @@
 			this.divShot.className = "laser";
 			this.road.appendChild(this.divShot);
 			this.xArray = parseInt((x*array.length)/100);
-			this.yArray = parseInt((y*array.length)/100);
+			this.yArray = parseInt((y*array.length)/300);
 			this.intervMove = 0;
 			this.intervDelay = 20;
 			this.maxZ = 500;

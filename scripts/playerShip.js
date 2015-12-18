@@ -8,7 +8,7 @@
 			this.y = y;
 			this.moving = 0;
 			this.state = 1;
-			this.health = 100;
+			this.health = 3;
 			this.regenDelay = 10000; //10s
 			this.incrMove = 2;
 			this.incrY = 10;
@@ -180,27 +180,9 @@
 			if (state == 1) console.log('flip');
 		},
 		touched: function (type) {
-			var self = this;
-			switch(type) {
-				case 2:
-					self.health -= 5;
-					break;
-				case 3:
-					self.health -= 10;
-					break;
-				case 4:
-					self.health -= 15;
-					break;
-				case 5:
-					self.health -= 20;
-					break;
-				case 6:
-					self.health -= 30;
-					break;
-				default:
-					break;
-			}
-			if(self.health < 1) self.die();
+			if (type == 6) this.health = 0;
+			else this.health--;
+			if(this.health < 1) this.die();
 		},
 		regenHealth: function () {
 			var self = this;
